@@ -1,5 +1,5 @@
-from ast import Return
-from fastapi import FastAPI
+from turtle import title
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 
 #   Launch with    cd exercise_GET_POST   uvicorn random_id:app --reload
@@ -13,6 +13,8 @@ class TaskBody(BaseModel):
     description : str
     completed : bool
 
+
+#this would create a new task whit the elements that the user chooses (limited by BaseModef)
 @app.post("/tasks/")
 async def create_task(task : TaskBody):
 
@@ -22,35 +24,43 @@ async def create_task(task : TaskBody):
 
     return task
 
+#but what if i want to rédit the or a task?
+@app.put("/tasks/{task_id}")
+async def update_task(task_id : int, data : TaskBody):
+    if task_id not in task_db:
+        raise HTTPException(status_code=404, detail="No task identified")
+    
+    task_db[task_id] = {"title" : data.title, "description" : data.description, "completed" : data.completed}
+
+    return task_db[task_id]
+
 
 @app.get("/tasks/{task_id}")
 async def get_task(task_id : int):
-    if task_id in task_db:
-        task = task_db[task_id]
-        return task
-    else:
-        return f"No id: {task_id} in the database"
+    if task_id not in task_db:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task = task_db[task_id]
+    return task
 
 
 @app.get("/tasks/")
 async def see_all_tasks(completed : bool = None):
-    match completed:
-        case True:
+    if completed == None:
+        return task_db
 
-            completed_tasks = []
-            for task_id, task in task_db.items():
-                if task["completed"] == True:
-                    completed_tasks.append(task)
-            return completed_tasks
+    tasks = []
+    for task_id, task in task_db.items():
+        if task["completed"] == completed:
+            tasks.append(task)
 
-        case False:
+    return tasks
 
-            incompleted_tasks = []
-            for task_id, task in task_db.items():
-                if task["completed"] == False:
-                    incompleted_tasks.append(task)
-            return incompleted_tasks
 
-        case None:
-            return task_db
+@app.delete("/tasks/{task_id}")
+async def delete_task(task_id : int):
+    if task_id not in task_db:
+        raise HTTPException(status_code=404, detail="No such task in directory")
     
+    deleted_task = task_db.pop(task_id)
+    return f"deleted {deleted_task}"
