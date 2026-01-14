@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Literal
 
 #uvicorn put_delete:app --reload
 
@@ -8,9 +9,9 @@ app = FastAPI()
 notes_db = {}
 
 class  NoteBody(BaseModel):
-    title: str
+    title: str = Field(min_length=1, max_length=1000)
     content : str
-    category : str
+    category : Literal["work", "fitness", "love"]
 
 @app.post("/notes/")
 async def create_note( data : NoteBody):
