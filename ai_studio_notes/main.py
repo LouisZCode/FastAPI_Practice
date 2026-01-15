@@ -1,11 +1,20 @@
 #   uvicorn main:app --reload
 
 import time
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from routes.notes import router as notes_router
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change later to the 
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(notes_router)
+
 
 @app.get("/health")
 def health_check():
