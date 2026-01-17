@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
-from typing import Literal
 from agents import flash_agent
 
 topics_db = {}
@@ -41,7 +40,7 @@ async def list_topics(category : str = None):
 async def get_topic(topic : dict = Depends(exist_or_404)):
     return topic
 
-@router.delete("/topic/{topic_id}")
+@router.delete("/topics/{topic_id}")
 async def delete_topic(topic_id : int , topic : dict = Depends(exist_or_404)):
     return {"deleted" : topics_db.pop(topic_id)}
 
@@ -62,4 +61,6 @@ async def generate_flashcard(topic_id : int, topic : dict =  Depends(exist_or_40
 
 @router.get("/topics/{topic_id}/flashcards")
 async def fetch_flashcards(topic_id : int, topic : dict = Depends(exist_or_404)):
+    if topic_id not in flash_card_db:
+        return [] 
     return flash_card_db[topic_id]
