@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from langchain_core.tools import retriever
 from pydantic import BaseModel, Field
 from typing import Literal
+from agents import flash_agent
 
 topics_db = {}
+flash_card_db = {}
 
 router = APIRouter()
 
@@ -19,10 +20,10 @@ class TopicBody(BaseModel):
 
 @router.post("/topics/")
 async def create_topic(topic : TopicBody):
-    topic_id = len(topics_db) + 1
-    topic_content = {"name" : topic.name, "category" : topic.category}
-    topics_db[topic_id] = topic_content
-    return topics_db[topic_id]
+    id = len(topics_db) +1
+    new_topic = {"name" : topic.name, "category" : topic.category}
+    topics_db[id] = new_topic 
+    return new_topic
 
 @router.get("/topics/")
 async def list_topics(category : str = None):
@@ -43,3 +44,22 @@ async def get_topic(topic : dict = Depends(exist_or_404)):
 @router.delete("/topic/{topic_id}")
 async def delete_topic(topic_id : int , topic : dict = Depends(exist_or_404)):
     return {"deleted" : topics_db.pop(topic_id)}
+
+
+@router.post("/topics/{topic_id}/generate")
+async def generate_flashcard(topic_id : int, topic : dict =  Depends(exist_or_404)):
+
+    context = topics_db[topic_id]
+    answer = await flash_agent.ainvoke({"messages" : {"role" : "user" , "content" : f"this is the context for the flashcard : {context}"}})
+    flash_card = answer["messages"][-1].content
+
+    if topic_id not in flash_card_db:
+        flash_card_db[topic_id] = [flash_card]
+    else:
+        flash_card_db[topic_id].append(flash_card)
+
+    return {"new_flashcard" : flash_card} 
+
+@router.get("/topics/{topic_id}/flashcards")
+async def fetch_flashcards(topic_id : int, topic : dict = Depends(exist_or_404)):
+    return flash_card_db[topic_id]
