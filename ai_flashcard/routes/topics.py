@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends
 from langchain_core.tools import retriever
 from pydantic import BaseModel, Field
 from typing import Literal
@@ -6,6 +6,12 @@ from typing import Literal
 topics_db = {}
 
 router = APIRouter()
+
+def exist_or_404(topic_id : int):
+    try:
+        return topics_db[topic_id]
+    except:
+        raise HTTPException(status_code=404, detail="not such topic in the database")
 
 class TopicBody(BaseModel):
     name : str = Field(min_length=2, max_length=20)
@@ -30,3 +36,10 @@ async def list_topics(category : str = None):
 
     return filtered_topics
     
+@router.get("/topics/{topic_id}")
+async def get_topic(topic : dict = Depends(exist_or_404)):
+    return topic
+
+@router.delete("/topic/{topic_id}")
+async def delete_topic(topic_id : int , topic : dict = Depends(exist_or_404)):
+    return {"deleted" : topics_db.pop(topic_id)}
