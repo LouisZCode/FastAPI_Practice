@@ -44,3 +44,7 @@ async def get_all_recipes(cuisine : str = None):
 @app.get("/recipes/{recipe_id}")
 async def get_one_recipe(recipe : dict = Depends(validate_recipe_id)):
     return recipe
+
+@app.delete("/recipes/{recipe_id}")
+async def delete_recipe(recipe_id : int, recipe : dict = Depends(validate_recipe_id)):
+    return {"deleted_recipe" : recipes_db.pop(recipe_id)}
