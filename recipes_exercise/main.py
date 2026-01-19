@@ -20,3 +20,16 @@ async def create_recipe(recipe : RecipeBody):
     recipe_id = len(recipes_db) +1
     recipes_db[recipe_id] = {"name" : recipe.name, "cuisine" : recipe.cuisine, "ingredients" : recipe.ingredients, "instructions" : recipe.instructions}
     return recipes_db[recipe_id]
+
+@app.get("/recipes/")
+async def get_all_recipes(cuisine : str = None):
+    if cuisine == None:
+        return recipes_db
+    
+    else:
+        filtered_recipes = []
+        for id, recipe in recipes_db.items():
+            if recipe["cuisine"] == cuisine:
+                filtered_recipes.append(recipe)
+        
+        return filtered_recipes
