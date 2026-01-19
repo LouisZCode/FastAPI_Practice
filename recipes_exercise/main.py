@@ -11,11 +11,12 @@ recipes_db = {}
 
 class RecipeBody(BaseModel):
     name : str
-    cuisine : Literal("mexican", "italian", "japanese")
+    cuisine : Literal["mexican", "italian", "japanese"]
     ingredients : list = Field(min_length=3)
-    instruction : str
+    instructions : str
 
 @app.post("/recipes/")
 async def create_recipe(recipe : RecipeBody):
     recipe_id = len(recipes_db) +1
-    
+    recipes_db[recipe_id] = {"name" : recipe.name, "cuisine" : recipe.cuisine, "ingredients" : recipe.ingredients, "instructions" : recipe.instructions}
+    return recipes_db[recipe_id]
