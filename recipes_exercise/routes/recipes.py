@@ -2,12 +2,14 @@ from fastapi import Depends, HTTPException, Security, APIRouter
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 from typing import Literal
+from agents import recipe_agent
 
 
 router = APIRouter()
 
 api_header = APIKeyHeader(name="X-API-KEY")
 recipes_db = {}
+improvements_db = {}
 
 valid_api_keys = {
     "api_key_123" : "junior_dev_01",
@@ -60,3 +62,8 @@ async def get_one_recipe(recipe : dict = Depends(validate_recipe_id),  api_key :
 async def delete_recipe(recipe_id : int, recipe : dict = Depends(validate_recipe_id),  api_key : str = Depends(validate_api_key)):
     return {"deleted_recipe" : recipes_db.pop(recipe_id)}
 
+@router.post("/recipes/{recipe_id}")
+async def ai_improve_recipe(recipe_id : int, recipe : dict = Depends(validate_recipe_id), api_key : str = Depends(validate_api_key)):
+    answer = await recipe_agent.ainvoke({"messages" : {"role" : "user", "content" : f"The user sends this recipe: {recipe}"}})
+    improvements_db[recipe_id] = answer["messages"][-1].content
+    return {"llm_answer" : improvements_db[recipe_id]}
